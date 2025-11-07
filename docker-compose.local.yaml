@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: rater-db
+    environment:
+      POSTGRES_USER: rater
+      POSTGRES_PASSWORD: rater
+      POSTGRES_DB: rater
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rater"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: rater-backend
+    ports:
+      - "8080:8080"
+    environment:
+      PORT: 8080
+      STATIC_DIR: /frontend/dist
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: rater
+      DB_PASSWORD: rater
+      DB_NAME: rater
+      DB_SSL_MODE: disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+
